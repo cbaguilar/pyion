@@ -2,6 +2,7 @@
 #define BASEBP_H
 
 #include <bp.h>
+#include "macros.h"
 
 #define MAX_PREALLOC_BUFFER 1024
 

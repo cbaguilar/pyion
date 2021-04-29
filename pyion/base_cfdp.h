@@ -21,7 +21,7 @@ typedef struct
 
 int base_cfdp_attach();
 
-void base_cfdp_detach();
+int base_cfdp_detach();
 
 int base_cfdp_compress_number();
 
@@ -37,11 +37,11 @@ int	noteSegmentTime(uvast fileOffset, unsigned int recordOffset,
 
 int base_cfdp_get();
 
-int base_cfdp_add_usrmsg(MetadataList list, unsigned char *text);
+int base_cfdp_add_usrmsg(MetadataList *list, unsigned char *text);
 
 MetadataList base_cfdp_create_fsreq_list(void);
 
-int base_cfdp_add_fsreq(MetadataList list, CfdpAction action, char *firstFileName, char *secondFileName);
+int base_cfdp_add_fsreq(MetadataList *list, CfdpAction action, char *firstFileName, char *secondFileName);
 
 int base_cfdp_cancel(CfdpReqParms *params);
 

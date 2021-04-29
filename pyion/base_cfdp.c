@@ -2,6 +2,8 @@
 #include <bputa.h>
 
 #include "base_cfdp.h"
+#include "macros.h"
+
 /**
  * Worker file to handle pure C function
  * interaction between PyION and ION.
@@ -22,22 +24,29 @@ int base_cfdp_open(CfdpReqParms *params, uvast from, int criticality)
     else
         params->utParms.ancillaryData.flags &= (~BP_MINIMUM_LATENCY);
 
-    return 0;
+    return PYION_OK;
 }
 
 int base_cfdp_attach()
 {
-    return cfdp_attach();
+    return (cfdp_attach() < 0) ? -1 : PYION_OK;
 }
 
-void base_cfdp_detach()
+int base_cfdp_detach()
 {
-    return cfdp_detach();
+    cfdp_detach();
+    return PYION_OK;
 }
 
-int base_cfdp_add_usrmsg(MetadataList list, unsigned char *text)
-{
-    return cfdp_add_usrmsg(list, text, strlen((const char*) text) + 1);
+int base_cfdp_add_usrmsg(MetadataList *msgsToUser, unsigned char* usrMsg) {
+    // Create user message list if necessary
+    if (*msgsToUser == 0)
+        *msgsToUser = cfdp_create_usrmsg_list();
+
+    // Add user message
+    cfdp_add_usrmsg(*msgsToUser, (unsigned char *)usrMsg, strlen((char *)usrMsg)+1);
+
+    return PYION_OK;
 }
 
 MetadataList base_cfdp_create_usrmsg_list(void)
@@ -50,9 +59,12 @@ MetadataList base_cfdp_create_fsreq_list(void)
     return cfdp_create_fsreq_list();
 }
 
-int base_cfdp_add_fsreq(MetadataList list, CfdpAction action, char *firstFileName, char *secondFileName)
+int base_cfdp_add_fsreq(MetadataList *fsRequests, CfdpAction action, char *firstFileName, char *secondFileName)
 {
-    return cfdp_add_fsreq(list, action, firstFileName, secondFileName);
+    if (*fsRequests == 0)
+        *fsRequests = base_cfdp_create_fsreq_list();
+    cfdp_add_fsreq(*fsRequests, action, firstFileName, secondFileName);
+    return PYION_OK;
 }
 
 void setParams(CfdpReqParms *params, char *sourceFile, char *destFile,
@@ -85,11 +97,20 @@ void setParams(CfdpReqParms *params, char *sourceFile, char *destFile,
 
 int base_cfdp_send(CfdpReqParms *params)
 {
-    return cfdp_put(&(params->destinationEntityNbr), sizeof(BpUtParms),
+    int ok = 0;
+    ok = cfdp_put(&(params->destinationEntityNbr), sizeof(BpUtParms),
                     (unsigned char *)&(params->utParms), params->sourceFileName,
                     params->destFileName, NULL, params->segMetadataFn,
                     NULL, 0, NULL, params->closureLatency, params->msgsToUser,
                     params->fsRequests, &(params->transactionId));
+    
+    if (ok < 0) return -1;
+
+    // Reset parameters
+    params->msgsToUser = 0;
+    params->fsRequests = 0;
+
+    return PYION_OK;
 }
 
 /* ============================================================================
@@ -103,11 +124,22 @@ int noteSegmentTime(uvast fileOffset, unsigned int recordOffset,
     return strlen(buffer) + 1;
 }
 
-int base_cfdp_get(CfdpReqParms *params, CfdpProxyTask *task)
+int base_cfdp_get(CfdpReqParms *params)
 {
+    CfdpProxyTask task;
+    task.sourceFileName = params->sourceFileName;
+    task.destFileName = params->destFileName;
+    task.messagesToUser = params->msgsToUser;
+    task.filestoreRequests = params->fsRequests;
+    task.faultHandlers = NULL;
+    task.unacknowledged = 1;
+    task.flowLabelLength = 0;
+    task.flowLabel = NULL;
+    task.recordBoundsRespected = 0;
+    task.closureRequested = !(params->closureLatency == 0);
     return cfdp_get(&(params->destinationEntityNbr), sizeof(BpUtParms),
                     (unsigned char *)&(params->utParms), NULL, NULL, NULL,
-                    NULL, 0, NULL, 0, 0, 0, task, &(params->transactionId));
+                    NULL, 0, NULL, 0, 0, 0, &task, &(params->transactionId));
 }
 
 int base_cfdp_cancel(CfdpReqParms *params)
