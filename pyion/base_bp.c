@@ -286,9 +286,11 @@ int base_bp_send(BpSapState *state, BpTx *txInfo)
     if (bundleZco == 0) {
         return PYION_IO_ERR;
     }
+    SDR_BEGIN_XN
     ok = bp_send(state->sap, txInfo->destEid, txInfo->reportEid, txInfo->ttl, 
                 txInfo->classOfService, txInfo->custodySwitch, txInfo->rrFlags, 
                 txInfo->ackReq, txInfo->ancillaryData, bundleZco, &newBundle);
+    SDR_END_XN
 
     // If you want custody transfer and have specified a re-transmission timer,
     // then activate it
