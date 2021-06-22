@@ -129,6 +129,7 @@ class Endpoint():
 
 		# Open another thread because otherwise you cannot handle a SIGINT if blocked
 		# waiting for ZCO space
+		#print(args) //this was used to debug the race condition between Python and ION
 		th = Thread(target=self._bp_send, args=args, daemon=True)
 		th.start()
 

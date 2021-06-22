@@ -343,7 +343,7 @@ static PyObject *pyion_bp_send(PyObject *self, PyObject *args) {
         return NULL;
  
     // Create TxPayload struct
-    txInfo.destEid = destEid;
+    strncpy((txInfo.destEid),destEid,EID_MAX_BUFFER+1);
     txInfo.reportEid = reportEid;
     txInfo.ttl = ttl;
     txInfo.classOfService = classOfService;

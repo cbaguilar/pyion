@@ -52,7 +52,7 @@ int base_bp_interrupt(BpSapState *state) {
 
 int base_create_bp_tx_payload(BpTx **obj) {
     BpTx *txInfo = malloc(sizeof(BpTx));
-    txInfo->destEid = NULL;
+    //txInfo->destEid = NULL;
     txInfo->reportEid = NULL;
     txInfo->ttl = 0;
     txInfo->classOfService = 0;
@@ -68,7 +68,7 @@ int base_create_bp_tx_payload(BpTx **obj) {
 }
 
 int base_init_bp_tx_payload(BpTx *txInfo) {
-    txInfo->destEid = NULL;
+    //txInfo->destEid = NULL;
     txInfo->reportEid = NULL;
     txInfo->ttl = 0;
     txInfo->classOfService = 0;
@@ -213,13 +213,15 @@ int base_bp_open(BpSapState **state_ref, char *ownEid, int detained, int mem_ctr
     }
     memset((char *)state, 0, sizeof(BpSapState));
 
+    strncpy(state->eid,ownEid, EID_MAX_BUFFER+1);
+
       // Open the endpoint. This call fills out the SAP information
     // NOTE: An endpoint must be opened in detained mode if you want
     //       to have custody-based re-tx.
     if (detained == 0) {
-        ok = bp_open(ownEid, &(state->sap));
+        ok = bp_open(state->eid, &(state->sap));
     } else {
-        ok = bp_open_source(ownEid, &(state->sap), 1);
+        ok = bp_open_source(state->eid, &(state->sap), 1);
     }
     if (ok < 0) {
         return PYION_IO_ERR;

@@ -6,6 +6,10 @@
 
 #define MAX_PREALLOC_BUFFER 1024
 
+//Not sure of the upper limit of the EID length, I'm using 256 for now but will
+//refrence the ION design document.
+#define EID_MAX_BUFFER 256 
+
 /**
  * Shim-layer 
  */
@@ -25,6 +29,7 @@ typedef enum
 // The status only used during reception for now.
 typedef struct
 {
+    char eid[EID_MAX_BUFFER+1];
     BpSAP sap;
     SapStateEnum status;
     int detained;
@@ -55,7 +60,7 @@ typedef struct
 typedef struct
 {
     char *data;
-    char *destEid;
+    char destEid[EID_MAX_BUFFER+1];
     char *reportEid;
     int ttl;
     int classOfService;
